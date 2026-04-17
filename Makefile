@@ -1,12 +1,18 @@
 # Makefile configurable variables.
 # To override them, set before running make
+.DELETE_ON_ERROR:
+
+# User-configurable variables
 DEBUG			?= 1
 OPTIMIZE		?= 0
 LINKER			?= lld
+SANITIZE		?=
+LIB_DIRS		?=
+PREFIX			?= /usr/local
 
 # Internal variables
 CXX 			:= g++
-CXX_FLAGS		:= -std=c++23 -Wall -Wextra -Wpedantic
+CXXFLAGS		:= -std=c++23 -Wall -Wextra -Wpedantic
 INCLUDE=
 LDFLAGS			:= -lssl -lcrypto -lsqlite3
 TARGET			:= happy_birthday
@@ -18,18 +24,38 @@ SRCS			:= $(wildcard $(SRC_DIR)/*.cpp)
 OBJS 			:= $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEPS			:= $(OBJS:.o=.d)
 
-# Based on configurable variables, completing CXX_FLAGS values
-ifeq ($(DEBUG), 1)
-	CXX_FLAGS += -g -O0
-else
-	CXX_FLAGS += -DNDEBUG
+# Check for required tools
+ifeq ($(shell command -v $(CXX) 2>/dev/null),)
+	$(error $(CXX) not found)
 endif
 
-ifeq ($(OPTIMIZE), 1)
-	ifeq ($(DEBUG), 0)
-		CXX_FLAGS += -O3
+# Based on configurable variables, completing CXXFLAGS values
+ifeq ($(DEBUG), 1)
+	CXXFLAGS += -g -O0
+else
+	CXXFLAGS += -DNDEBUG
+	ifeq ($(OPTIMIZE), 1)
+		CXXFLAGS += -O3
 	endif
 endif
+
+ifneq ($(SANITIZE),)
+	ifeq ($(SANITIZE), ASAN)
+		CXXFLAGS += -fsanitize=address
+		LDFLAGS += -fsanitize=address
+	else ifeq ($(SANITIZE), UBSAN)
+		CXXFLAGS += -fsanitize=undefined
+		LDFLAGS += -fsanitize=undefined
+	else ifeq ($(SANITIZE), TSAN)
+		CXXFLAGS += -fsanitize=thread
+		LDFLAGS += -fsanitize=thread
+	else
+		$(error Unknown sanitizer: $(SANITIZE))
+	endif
+endif
+
+# Library paths
+LDFLAGS += $(addprefix -L, $(LIB_DIRS))
 
 ifeq ($(LINKER), lld)
 	LDFLAGS += -fuse-ld=lld
@@ -39,21 +65,46 @@ else
 	$(error Unknown linker: $(LINKER))
 endif
 
-# Receipts
-.PHONY: all clean
+# Recipes
+.PHONY: all clean help install
 
+# Build the executable (default target)
 all: $(TARGET)
 
+# Link object files into the final executable
 $(TARGET): $(OBJS)
-	$(CXX) $(CXX_FLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 -include $(DEPS)
 
+# Compile source files to object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXX_FLAGS) $(INCLUDE) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -MMD -MP -c $< -o $@
 
+# Create build directory
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+# Remove build artifacts
 clean:
-	rm -rf $(TARGET) $(BUILD_DIR)
+	$(RM) -rf $(TARGET) $(BUILD_DIR)
+
+# Install the executable to PREFIX/bin
+install: $(TARGET)
+	install -m 755 $< $(PREFIX)/bin
+
+# Show help
+help:
+	@echo "Available targets:"
+	@echo "  all       - Build the project (default)"
+	@echo "  clean     - Remove build artifacts"
+	@echo "  install   - Install the executable to $(PREFIX)/bin"
+	@echo "  help      - Show this help"
+	@echo ""
+	@echo "Variables (set before make, e.g., make DEBUG=0):"
+	@echo "  DEBUG=1/0				- Enable/disable debug mode"
+	@echo "  OPTIMIZE=1/0				- Enable/disable optimization"
+	@echo "  LINKER=lld/gold			- Choose linker"
+	@echo "  SANITIZE=ASAN/UBSAN/TSAN		- Enable address/undefined/thread sanitizers"
+	@echo "  LIB_DIRS				- Additional library directories (-L paths)"
+	@echo "  PREFIX				- Install prefix (default: /usr/local)"
