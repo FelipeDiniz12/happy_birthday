@@ -13,5 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Install dependencies and LLD
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lld
     - name: make
       run: make
