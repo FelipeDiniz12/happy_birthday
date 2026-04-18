@@ -3,6 +3,7 @@
 #include "SQLUtils.h"
 
 #include <algorithm>
+#include <array>
 #include <iomanip>
 #include <iostream>
 #include <openssl/evp.h>
@@ -10,6 +11,8 @@
 #include <sstream>
 #include <termios.h>
 #include <unistd.h>
+
+#define HASH_LENGTH 26
 
 namespace
 {
@@ -21,26 +24,26 @@ namespace
  * Its default value is "felipinho".
  * @return Returns a string hash after salting it and encrypting it.
  */
-std::string makePasswordHash(std::string& password, const std::string& salt = "felipinho")
+auto makePasswordHash(std::string& password, const std::string& salt = "felipinho") -> std::string
 {
     std::string saltedPass = password + salt;
-    unsigned char hash[EVP_MAX_MD_SIZE];
-    unsigned int lengthOfHash = 26;
+    std::array<unsigned char, EVP_MAX_MD_SIZE> hash;
+    unsigned int lengthOfHash = HASH_LENGTH;
 
     EVP_MD_CTX* context = EVP_MD_CTX_new();
     EVP_DigestInit_ex(context, EVP_sha256(), NULL);
     EVP_DigestUpdate(context, saltedPass.c_str(), saltedPass.length());
-    EVP_DigestFinal_ex(context, hash, &lengthOfHash);
+    EVP_DigestFinal_ex(context, hash.data(), &lengthOfHash);
     EVP_MD_CTX_free(context);
     password.assign(password.length(), '0');
     // Store 'hash' and 'salt' in your database
 
-    std::stringstream ss;
+    std::stringstream strStream;
     for (unsigned int i = 0; i < lengthOfHash; i++) {
-        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+        strStream << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
     }
 
-    return ss.str();
+    return strStream.str();
 }
 
 /**
@@ -48,7 +51,7 @@ std::string makePasswordHash(std::string& password, const std::string& salt = "f
  * username and password and checking if passwords match.
  * @return true if login works, false if not.
  */
-std::string getPassword(std::string& password)
+auto getPassword(std::string& password) -> std::string
 {
     termios oldt;
     tcgetattr(STDIN_FILENO, &oldt); // Save current terminal settings
@@ -67,7 +70,7 @@ std::string getPassword(std::string& password)
 /**
  * @brief Validate if a user exists in user database
  */
-bool verifyUsernameDatabase(const std::string& username, const std::string& databasePath)
+auto verifyUsernameDatabase(const std::string& username, const std::string& databasePath) -> bool
 {
     if (SQLUtils::checkQueryCondition(
             databasePath, "SELECT ID FROM users WHERE username = ? LIMIT 1;", {username})) {
@@ -87,12 +90,12 @@ void addUsernameInDatabase(const std::string& username, const std::string& passw
                            const std::string& databasePath)
 {
     if (SQLUtils::addUserToTable(username, password, databasePath)) {
-        std::cout << "User: \"" << username << "\" was registered in database." << std::endl;
+        std::cout << "User: \"" << username << "\" was registered in database.\n";
     }
 }
 } // namespace
 
-bool AuthenticationUtils::registerUser()
+auto AuthenticationUtils::registerUser() -> bool
 {
     std::cout << "Enter your username: ";
     std::string username;
@@ -100,16 +103,16 @@ bool AuthenticationUtils::registerUser()
     std::cout << "Enter your password: ";
     std::string password;
     std::string pwd = getPassword(password);
-    std::cout << std::endl;
+    std::cout << "\n";
     std::cout << "Enter your password again: ";
     std::string checkPassword;
     std::string checkPwd = getPassword(checkPassword);
-    std::cout << std::endl;
+    std::cout << "\n";
 
     if (pwd != checkPwd) {
-        std::cout << std::endl;
-        std::cerr << "Passwords differ from each other!" << std::endl;
-        return 1;
+        std::cout << "\n";
+        std::cerr << "Passwords differ from each other!\n";
+        return false;
     }
 
     if (!::verifyUsernameDatabase(username, "users.db")) {
@@ -120,7 +123,7 @@ bool AuthenticationUtils::registerUser()
     return true;
 }
 
-bool AuthenticationUtils::loginUser()
+auto AuthenticationUtils::loginUser() -> bool
 {
     std::cout << "Enter your username: ";
     std::string username;
@@ -128,27 +131,29 @@ bool AuthenticationUtils::loginUser()
     std::cout << "Enter your password: ";
     std::string password;
     std::string pwd = getPassword(password);
-    std::cout << std::endl;
+    std::cout << "\n";
 
     if (!SQLUtils::checkQueryCondition(
             "users.db", "SELECT ID FROM users WHERE username = ? LIMIT 1;", {username})) {
-        std::cerr << "User \"" << username << "\" not found in database" << std::endl;
+        std::cerr << "User \"" << username << "\" not found in database\n";
         return false;
     }
 
+    bool returnValue;
     if (SQLUtils::checkQueryCondition(
             "users.db", "SELECT ID FROM users WHERE username = ? AND password = ? LIMIT 1;",
-            {username, password})) {
-        std::cout << "Successfull authentication!" << std::endl;
-        return true;
+            {username, pwd})) {
+        std::cout << "Successfull authentication!\n";
+        returnValue = true;
     } else {
-        std::cout << "Wrong password!" << std::endl;
-        return false;
+        std::cout << "Wrong password!\n";
+        returnValue = false;
     }
+    return returnValue;
 }
 
 void AuthenticationUtils::toLowerCase(std::string& str)
 {
     std::transform(str.begin(), str.end(), str.begin(),
-                   [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char character) { return std::tolower(character); });
 }

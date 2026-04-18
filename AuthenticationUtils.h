@@ -4,7 +4,7 @@
 
 namespace AuthenticationUtils
 {
-    enum AUTHENTICATION_ERROR
+    enum AUTHENTICATION_ERROR : char
     {
         NO_ERROR=0,
         WRONG_PASSWORD_REPETITION=1,
@@ -17,14 +17,14 @@ namespace AuthenticationUtils
      * username and password (twice) and checking if passwords match.
      * @return true if registration works, false if not.
      */
-    bool registerUser();
+    auto registerUser() -> bool;
 
     /**
      * @brief Perform user login, prompting messages for
      * username and password and checking if passwords match.
      * @return true if login works, false if not.
      */
-    bool loginUser();
+    auto loginUser() -> bool;
 
     /**
      * @brief Transform a string reference to lower case. A good option

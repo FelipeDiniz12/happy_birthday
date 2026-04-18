@@ -15,7 +15,7 @@ namespace SQLUtils
      * @param commandToRun Command to be run after opening/creating the database.
      * @return Returns a pointer of sqlite3 for the database requrested.
      */
-    sqlite3* getDatabase(const std::string& databasePath, const std::string& commandToRun = "");
+    auto getDatabase(const std::string& databasePath, const std::string& query = "") -> sqlite3*;
 
     /**
      * @brief Check if a given query in a database returns a valid ID or not.
@@ -25,7 +25,7 @@ namespace SQLUtils
      * query.
      * @return Returns true if query is successful, otherwise, false.
      */
-    bool checkQueryCondition(const std::string& databasePath, const std::string& query, const std::vector<std::string>& listOfElements = {});
+    auto checkQueryCondition(const std::string& databasePath, const std::string& query, const std::vector<std::string>& listOfElements = {}) -> bool;
 
     /**
      * @brief Add a user to the database.
@@ -33,5 +33,5 @@ namespace SQLUtils
      * @param password The hashed password to the added along with the user.
      * @return Returns true if the user was added to the table, otherwise, false.
      */
-    bool addUserToTable(const std::string& username, const std::string& password, const std::string& databasePath = "users.db");
+    auto addUserToTable(const std::string& username, const std::string& password, const std::string& databasePath = "users.db") -> bool;
 }

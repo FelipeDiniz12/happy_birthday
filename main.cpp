@@ -7,17 +7,17 @@
 #include <iostream>
 #include <string>
 
-#define LOGIN 0
-#define REGISTER 1
+#define LOGIN false
+#define REGISTER true
 #define MAXIMUM_ATTEMPTS 3
 
-int main()
+auto main() -> int
 {
     // Create database if it does not exist.
     SQLUtils::getDatabase("users.db",
                           "CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT, "
                           "username TEXT NOT NULL UNIQUE, password TEXT NOT NULL);");
-    std::cout << "========= Welcome to HappyBirthday =========" << std::endl;
+    std::cout << "========= Welcome to HappyBirthday =========\n";
     std::string option;
     std::cout << "Login or register? ";
     std::getline(std::cin, option);
@@ -28,8 +28,8 @@ int main()
     } else if (option == "register") {
         mode = REGISTER;
     } else {
-        std::cout << std::endl;
-        std::cerr << "Invalid option. Choose either to login or register" << std::endl;
+        std::cout << "\n";
+        std::cerr << "Invalid option. Choose either to login or register\n";
         return 1;
     }
 
@@ -42,7 +42,7 @@ int main()
             return 1;
         }
     }
-    std::cout << std::endl;
-    std::cout << "Ending program..." << std::endl;
+    std::cout << "\n";
+    std::cout << "Ending program...\n";
     return 0;
 }
