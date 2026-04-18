@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 CWD=`pwd`
 
 TESTS=`find $CWD -type f -name "*.sh"`
