@@ -40,8 +40,6 @@ auto executeSqlQuery(const std::string& databasePath,
         index++;
     }
 
-    std::cout << "Statement is: " << sqlite3_expanded_sql(stmt) << "\n";
-
     // 3. Execute the statement
     int executionResult = sqlite3_step(stmt);
 
