@@ -2,14 +2,22 @@
 #include "AuthenticationUtils.h"
 #include "SQLUtils.h"
 
+#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <iostream>
 #include <string>
 
-#define LOGIN false
-#define REGISTER true
 #define MAXIMUM_ATTEMPTS 3
+
+namespace
+{
+enum Mode : char {
+    LOGIN = 0,
+    REGISTER = 1,
+    INVALID = 2,
+};
+}
 
 auto main() -> int
 {
@@ -19,27 +27,36 @@ auto main() -> int
                           "username TEXT NOT NULL UNIQUE, password TEXT NOT NULL);");
     std::cout << "========= Welcome to HappyBirthday =========\n";
     std::string option;
-    std::cout << "Login or register? ";
-    std::getline(std::cin, option);
-    AuthenticationUtils::toLowerCase(option);
-    bool mode;
-    if (option == "login") {
-        mode = LOGIN;
-    } else if (option == "register") {
-        mode = REGISTER;
-    } else {
-        std::cout << "\n";
-        std::cerr << "Invalid option. Choose either to login or register\n";
-        return 1;
-    }
-
-    if (mode == LOGIN) {
-        if (!AuthenticationUtils::loginUser()) {
-            return 1;
+    while (true) {
+        std::cout << "Login, register or exit? ";
+        std::getline(std::cin, option);
+        AuthenticationUtils::toLowerCase(option);
+        Mode mode;
+        if (option == "login") {
+            mode = Mode::LOGIN;
+        } else if (option == "register") {
+            mode = Mode::REGISTER;
+        } else if (option == "exit") {
+            std::cout << "Exiting program...\n";
+            return 0;
+        } else {
+            mode = Mode::INVALID;
         }
-    } else {
-        if (!AuthenticationUtils::registerUser()) {
-            return 1;
+
+        switch (mode) {
+        case Mode::LOGIN:
+            AuthenticationUtils::loginUser(MAXIMUM_ATTEMPTS);
+            break;
+        case Mode::REGISTER:
+            AuthenticationUtils::registerUser(MAXIMUM_ATTEMPTS);
+            break;
+        case Mode::INVALID:
+            std::cout << "\n";
+            std::cerr << "Invalid option. Choose a valid option.\n";
+            break;
+        default:
+            assert(0 && "Invalid mode");
+            break;
         }
     }
     std::cout << "\n";

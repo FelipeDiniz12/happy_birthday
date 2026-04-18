@@ -95,7 +95,7 @@ void addUsernameInDatabase(const std::string& username, const std::string& passw
 }
 } // namespace
 
-auto AuthenticationUtils::registerUser() -> bool
+auto AuthenticationUtils::registerUser(const uint maximumAttempts) -> bool
 {
     std::cout << "Enter your username: ";
     std::string username;
@@ -103,15 +103,24 @@ auto AuthenticationUtils::registerUser() -> bool
     std::cout << "Enter your password: ";
     std::string password;
     std::string pwd = getPassword(password);
-    std::cout << "\n";
-    std::cout << "Enter your password again: ";
-    std::string checkPassword;
-    std::string checkPwd = getPassword(checkPassword);
-    std::cout << "\n";
 
-    if (pwd != checkPwd) {
+    uint attempt;
+
+    for (attempt = 1; attempt <= maximumAttempts; ++attempt) {
+        std::cout << "\nEnter your password again: ";
+        std::string checkPassword;
+        std::string checkPwd = getPassword(checkPassword);
         std::cout << "\n";
-        std::cerr << "Passwords differ from each other!\n";
+        if (pwd != checkPwd) {
+            std::cout << "\n";
+            std::cout << "Passwords differ from each other!\nTry once again...\n";
+        } else {
+            break;
+        }
+    }
+
+    if (attempt > maximumAttempts) {
+        std::cerr << "Maximum attempts reached. Registration failed.\n";
         return false;
     }
 
@@ -123,7 +132,7 @@ auto AuthenticationUtils::registerUser() -> bool
     return true;
 }
 
-auto AuthenticationUtils::loginUser() -> bool
+auto AuthenticationUtils::loginUser(const uint maximumAttempts) -> bool
 {
     std::cout << "Enter your username: ";
     std::string username;
@@ -139,15 +148,28 @@ auto AuthenticationUtils::loginUser() -> bool
         return false;
     }
 
-    bool returnValue;
-    if (SQLUtils::checkQueryCondition(
-            "users.db", "SELECT ID FROM users WHERE username = ? AND password = ? LIMIT 1;",
-            {username, pwd})) {
-        std::cout << "Successfull authentication!\n";
-        returnValue = true;
-    } else {
-        std::cout << "Wrong password!\n";
-        returnValue = false;
+    bool returnValue = false;
+    uint attempt;
+    for (attempt = 1; attempt < maximumAttempts; ++attempt) {
+        if (SQLUtils::checkQueryCondition(
+                "users.db", "SELECT ID FROM users WHERE username = ? AND password = ? LIMIT 1;",
+                {username, pwd})) {
+            std::cout << "Successfull authentication!\n";
+            returnValue = true;
+        } else {
+            std::cout << "Wrong password!\nTry once again...\n";
+            std::cout << "Enter your password: ";
+            std::string password;
+            pwd = getPassword(password);
+            std::cout << "\n";
+        }
+        if (returnValue) {
+            // Password is correct, break the loop
+            break;
+        }
+    }
+    if (attempt >= maximumAttempts) {
+        std::cerr << "Maximum attempts reached. Login failed.\n";
     }
     return returnValue;
 }
