@@ -14,7 +14,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Go to tests directory
-      run: cd tests
     - name: Run tests
-      run: ./run_tests.sh
+      run: ./tests/run_tests.sh
