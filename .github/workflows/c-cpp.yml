@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-test:
 
     runs-on: ubuntu-latest
     steps:
@@ -18,12 +18,5 @@ jobs:
         sudo apt-get install -y lld
     - name: make
       run: make
-
-  regression:
-
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
     - name: Run regression tests
       run: ./tests/run_tests.sh
