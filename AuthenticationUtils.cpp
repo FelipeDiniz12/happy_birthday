@@ -97,14 +97,28 @@ void addUsernameInDatabase(const std::string& username, const std::string& passw
 
 auto AuthenticationUtils::registerUser(const uint maximumAttempts) -> bool
 {
-    std::cout << "Enter your username: ";
+    uint attempt;
     std::string username;
-    std::getline(std::cin, username);
+
+    for (attempt = 1; attempt <= maximumAttempts; ++attempt) {
+        std::cout << "Enter your username: ";
+        std::getline(std::cin, username);
+
+        if (username == "") {
+            std::cout << "Username cannot be empty!\nTry once again...\n";
+        } else {
+            break;
+        }
+    }
+
+    if (attempt > maximumAttempts) {
+        std::cerr << "Maximum attempts reached. Registration failed.\n";
+        return false;
+    }
+
     std::cout << "Enter your password: ";
     std::string password;
     std::string pwd = getPassword(password);
-
-    uint attempt;
 
     for (attempt = 1; attempt <= maximumAttempts; ++attempt) {
         std::cout << "\nEnter your password again: ";
@@ -134,9 +148,25 @@ auto AuthenticationUtils::registerUser(const uint maximumAttempts) -> bool
 
 auto AuthenticationUtils::loginUser(const uint maximumAttempts) -> bool
 {
-    std::cout << "Enter your username: ";
+    uint attempt;
     std::string username;
-    std::getline(std::cin, username);
+
+    for (attempt = 1; attempt <= maximumAttempts; ++attempt) {
+        std::cout << "Enter your username: ";
+        std::getline(std::cin, username);
+
+        if (username == "") {
+            std::cout << "Username cannot be empty!\nTry once again...\n";
+        } else {
+            break;
+        }
+    }
+
+    if (attempt > maximumAttempts) {
+        std::cerr << "Maximum attempts reached. Login failed.\n";
+        return false;
+    }
+
     std::cout << "Enter your password: ";
     std::string password;
     std::string pwd = getPassword(password);
@@ -149,7 +179,6 @@ auto AuthenticationUtils::loginUser(const uint maximumAttempts) -> bool
     }
 
     bool returnValue = false;
-    uint attempt;
     for (attempt = 1; attempt < maximumAttempts; ++attempt) {
         if (SQLUtils::checkQueryCondition(
                 "users.db", "SELECT ID FROM users WHERE username = ? AND password = ? LIMIT 1;",
