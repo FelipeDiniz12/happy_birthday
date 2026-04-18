@@ -15,4 +15,10 @@ for test in $TESTS; do
     echo "Running test: $test"
     echo "========================================"
     bash "$test"
+    if [ $? -ne 0 ]; then
+        echo "Test $test failed."
+        exit 1
+    else
+        echo "Test $test passed."
+    fi
 done

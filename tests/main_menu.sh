@@ -1,49 +1,36 @@
 #!/usr/bin/env bash
 source test_utils.sh
 
-startup
+output=$(run_scenario "Successful Registration with Password Mismatch" "register
+user1
+pass123
+pass122
+pass123
+exit")
+assert_contains "$output" "Passwords differ" "password mismatch"
+assert_contains "$output" "was registered" "registration success"
 
-# Scenario 1: Successful Registration
-echo "=== SCENARIO 1: Successful Registration ==="
-send_input "register" "register"
-send_input "user1" "username"
-send_input "pass123" "password"
+output=$(run_scenario "Successful Login" "register
+testuser
+pass123
+pass123
+login
+testuser
+pass123
+exit")
+assert_contains "$output" "was registered" "login setup"
+assert_contains "$output" "Successfull authentication" "login success"
 
-send_input "pass122" "confirm_error"
-read_output
-assert_contains "Passwords differ" "password mismatch"
+output=$(run_scenario "Duplicate User Registration" "register
+duplicateuser
+pass123
+pass123
+register
+duplicateuser
+pass123
+pass123
+exit")
+assert_contains "$output" "already exists" "duplicate user detection"
 
-send_input "pass123" "confirm"
-read_output
-assert_contains "was registered" "registration success"
-
-# Scenario 2: Successful Login
-echo ""
-echo "=== SCENARIO 2: Successful Login ==="
-send_input "login" "login"
-send_input "user1" "username"
-
-send_input "pass12" "password_wrong"
-read_output
-assert_contains "Wrong password" "login failure"
-
-send_input "pass123" "password"
-read_output
-assert_contains "Successfull authentication" "login success"
-
-# Scenario 3: Try to register duplicate
-echo ""
-echo "=== SCENARIO 3: Duplicate User Registration ==="
-send_input "register" "register again"
-read_output
-send_input "user1" "duplicate username"
-read_output
-send_input "pass123" "password"
-read_output
-send_input "pass123" "confirm"
-read_output
-
-assert_contains "already exists" "duplicate check"
-
-finish
+print_summary
 exit $failed
