@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 CWD=`pwd`
+cd $CWD/tests
 
 TESTS=`find $CWD -type f -name "*.sh"`
 
