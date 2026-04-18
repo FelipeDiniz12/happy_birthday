@@ -47,7 +47,7 @@ assert_contains() {
         echo "✓ PASS: $test_name"
         ((passed++))
     else
-        echo "✗ FAIL: $test_name (expected: \"$expected\")"
+        echo "✗ FAIL: $test_name (expected: \"$expected\") (observed: \"$output\")"
         ((failed++))
     fi
 }
