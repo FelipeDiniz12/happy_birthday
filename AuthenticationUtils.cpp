@@ -74,7 +74,7 @@ auto verifyUsernameDatabase(const std::string& username, const std::string& data
 {
     if (SQLUtils::checkQueryCondition(
             databasePath, "SELECT ID FROM users WHERE username = ? LIMIT 1;", {username})) {
-        std::cerr << "Username: \"" << username << "\" already exists...";
+        std::cerr << "Username: \"" << username << "\" already exists...\n";
         return false;
     }
     return true;
